@@ -56,7 +56,6 @@ function detectPerson() {
   objectDetector.detect(video, (err, results) => {
     for (var i = 0; i < results.length; i++) {
       if (results[i].confidence > 0.9 && results[i].label == "person") {
-        console.log("person");
         ctx.font = "20px Arial";
         ctx.fillStyle = "green";
         ctx.fillText("ID:" + i, results[i].x, results[i].y+20);
