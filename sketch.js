@@ -43,7 +43,6 @@ function drawCameraIntoCanvas() {
   // We can call both functions to draw all keypoints and the skeletons
   drawKeypoints();
   drawSkeleton();
-  drawID();
   detectPerson();
   window.requestAnimationFrame(drawCameraIntoCanvas);
 }
@@ -57,6 +56,10 @@ function detectPerson() {
   objectDetector.detect(video, (err, results) => {
     for (var i = 0; i < results.length; i++) {
       if (results[i].confidence > 0.9 && results[i].label == "person") {
+        console.log("person");
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "green";
+        ctx.fillText("ID:" + i, results[i].x, results[i].y+20);
         ctx.beginPath();
         ctx.lineWidth = "2";
         ctx.strokeStyle = "green";
@@ -74,35 +77,6 @@ poseNet.on("pose", gotPoses);
 // A function that gets called every time there's an update from the model
 function gotPoses(results) {
   poses = results;
-}
-
-//add to person array if id does not already exist
-function drawID(){
-  //console.log(JSON.stringify(poses));
-  for (let i = 0; i < poses.length; i += 1) {
-    // For each pose detected, loop through all the keypoints
-    for (let j = 0; j < poses[i].pose.keypoints.length; j += 1) {
-      let keypoint = poses[i].pose.keypoints[j];
-      // Only draw an ellipse is the pose probability is bigger than 0.2
-      if (keypoint.part == "nose") {
-        //console.log(keypoint.position.x + " , " + keypoint.position.x);
-        ctx.font = "30px Arial";
-        ctx.fillStyle = "#FF0000";
-        ctx.fillText("ID:" + i, keypoint.position.x-10, keypoint.position.y-50);
-      }
-    }
-  }
-
-  /*let found = false;
-  for (let i = 0; i < poses.length; i++) {
-    if (poses[i].id == poses[i]) {
-        found = true;
-    }
-  }
-  if (found != true){
-    people.push({id:poses[i]});
-  }
-  console.log(found);*/
 }
 
 // model ready
