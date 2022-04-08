@@ -1,0 +1,148 @@
+// Grab elements, create settings, etc.
+var video = document.getElementById("video");
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+
+// The detected positions will be inside an array
+let poses = [];
+let people = [];
+
+
+// image classifier
+// Initialize the Image Classifier method with MobileNet
+const objectDetector = ml5.objectDetector('cocossd', {}, objectModelLoaded);
+
+// When the model is loaded
+function objectModelLoaded() {
+  console.log('Model Loaded!');
+}
+
+
+video.addEventListener('loadeddata', (event) => {
+  console.log('vid loaded');
+  video.play();
+  drawCameraIntoCanvas();
+});
+
+// Create a webcam capture
+//if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+//  navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+//    video.srcObject = stream;
+//    video.play();
+//  });
+//}
+
+
+// A function to draw the video and poses into the canvas.
+// This function is independent of the result of posenet
+// This way the video will not seem slow if poseNet
+// is not detecting a position
+function drawCameraIntoCanvas() {
+  // Draw the video element into the canvas
+  ctx.drawImage(video, 0, 0, 640, 480);
+  // We can call both functions to draw all keypoints and the skeletons
+  drawKeypoints();
+  drawSkeleton();
+  drawID();
+  detectPerson();
+  window.requestAnimationFrame(drawCameraIntoCanvas);
+}
+// Loop over the drawCameraIntoCanvas function
+//drawCameraIntoCanvas();
+
+
+// detect a person and track them
+function detectPerson() {
+  // Make a prediction with a selected frame
+  objectDetector.detect(video, (err, results) => {
+    for (var i = 0; i < results.length; i++) {
+      if (results[i].confidence > 0.9 && results[i].label == "person") {
+        ctx.beginPath();
+        ctx.lineWidth = "2";
+        ctx.strokeStyle = "green";
+        ctx.rect(results[i].x, results[i].y, results[i].width, results[i].height);
+        ctx.stroke();
+      }  
+    }
+  });
+}
+
+// Create a new poseNet method with a single detection
+const poseNet = ml5.poseNet(video, modelReady);
+poseNet.on("pose", gotPoses);
+
+// A function that gets called every time there's an update from the model
+function gotPoses(results) {
+  poses = results;
+}
+
+//add to person array if id does not already exist
+function drawID(){
+  //console.log(JSON.stringify(poses));
+  for (let i = 0; i < poses.length; i += 1) {
+    // For each pose detected, loop through all the keypoints
+    for (let j = 0; j < poses[i].pose.keypoints.length; j += 1) {
+      let keypoint = poses[i].pose.keypoints[j];
+      // Only draw an ellipse is the pose probability is bigger than 0.2
+      if (keypoint.part == "nose") {
+        //console.log(keypoint.position.x + " , " + keypoint.position.x);
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "#FF0000";
+        ctx.fillText("ID:" + i, keypoint.position.x-10, keypoint.position.y-50);
+      }
+    }
+  }
+
+  /*let found = false;
+  for (let i = 0; i < poses.length; i++) {
+    if (poses[i].id == poses[i]) {
+        found = true;
+    }
+  }
+  if (found != true){
+    people.push({id:poses[i]});
+  }
+  console.log(found);*/
+}
+
+// model ready
+function modelReady() {
+  console.log("model ready");
+  poseNet.multiPose(video);
+}
+
+// A function to draw ellipses over the detected keypoints
+function drawKeypoints() {
+  // Loop through all the poses detected
+  for (let i = 0; i < poses.length; i += 1) {
+    // For each pose detected, loop through all the keypoints
+    for (let j = 0; j < poses[i].pose.keypoints.length; j += 1) {
+      let keypoint = poses[i].pose.keypoints[j];
+      // Only draw an ellipse is the pose probability is bigger than 0.2
+      if (keypoint.score > 0.2) {
+        ctx.beginPath();
+        ctx.fillStyle = "#FF0000";
+        ctx.arc(keypoint.position.x, keypoint.position.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+        //ctx.stroke();
+      }
+    }
+  }
+}
+
+// A function to draw the skeletons
+function drawSkeleton() {
+  // Loop through all the skeletons detected
+  for (let i = 0; i < poses.length; i += 1) {
+    // For every skeleton, loop through all body connections
+    for (let j = 0; j < poses[i].skeleton.length; j += 1) {
+      let partA = poses[i].skeleton[j][0];
+      let partB = poses[i].skeleton[j][1];
+      ctx.beginPath();
+      ctx.moveTo(partA.position.x, partA.position.y);
+      ctx.lineTo(partB.position.x, partB.position.y);
+      ctx.strokeStyle = "#FF0000";
+      ctx.stroke();
+    }
+  }
+}
