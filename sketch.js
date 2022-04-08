@@ -7,22 +7,10 @@ var ctx = canvas.getContext("2d");
 let poses = [];
 let people = [];
 
-
-// image classifier
-// Initialize the Image Classifier method with MobileNet
-const objectDetector = ml5.objectDetector('cocossd', {}, objectModelLoaded);
-
-// When the model is loaded
-function objectModelLoaded() {
-  console.log('Model Loaded!');
-}
-
-
 video.addEventListener('loadeddata', (event) => {
   console.log('vid loaded');
-  video.play();
-  drawCameraIntoCanvas();
 });
+
 
 // Create a webcam capture
 //if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -41,21 +29,40 @@ function drawCameraIntoCanvas() {
   // Draw the video element into the canvas
   ctx.drawImage(video, 0, 0, 640, 480);
   // We can call both functions to draw all keypoints and the skeletons
-  drawKeypoints();
-  drawSkeleton();
+  //drawKeypoints();
+  //drawSkeleton();
   detectPerson();
   window.requestAnimationFrame(drawCameraIntoCanvas);
 }
 // Loop over the drawCameraIntoCanvas function
 //drawCameraIntoCanvas();
 
+// image classifier
+// Initialize the Image Classifier method with MobileNet
+const objectDetector = ml5.objectDetector('cocossd', {}, objectModelLoaded);
+
+// When the model is loaded
+function objectModelLoaded() {
+  console.log('cocossd Model Loaded');
+  video.play();
+  drawCameraIntoCanvas();
+}
 
 // detect a person and track them
 function detectPerson() {
   // Make a prediction with a selected frame
   objectDetector.detect(video, (err, results) => {
+    ctx.beginPath();
+    ctx.rect(0, 0, 640, 480);
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.fill();
+    ctx.lineWidth = "1";
+    ctx.strokeStyle = "black";
+    ctx.stroke();
     for (var i = 0; i < results.length; i++) {
-      if (results[i].confidence > 0.9 && results[i].label == "person") {
+      if (results[i].label == "person") {
+        //context.drawImage(img,clipx,clipy,clipwidth,clipheight,x,y,width,height);
+        ctx.drawImage(video, results[i].x, results[i].y, results[i].width, results[i].height, results[i].x, results[i].y, results[i].width, results[i].height);
         ctx.font = "20px Arial";
         ctx.fillStyle = "green";
         ctx.fillText("ID:" + i, results[i].x, results[i].y+20);
@@ -80,7 +87,7 @@ function gotPoses(results) {
 
 // model ready
 function modelReady() {
-  console.log("model ready");
+  console.log("pose model ready");
   poseNet.multiPose(video);
 }
 
