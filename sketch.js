@@ -3,9 +3,10 @@ var video = document.getElementById("video");
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 
+// canvas
 var canvas0 = document.getElementById("canvas-one");
 var ctx0 = canvas0.getContext("2d");
-
+//canvas
 var canvas1 = document.getElementById("canvas-two");
 var ctx1 = canvas1.getContext("2d");
 
