@@ -71,7 +71,11 @@ function detectPerson() {
         ctx.strokeStyle = "green";
         ctx.rect(results[i].x, results[i].y, results[i].width, results[i].height);
         ctx.stroke();
+        
+        // call classify here
       }  
+      drawKeypoints();
+      drawSkeleton();
     }
   });
 }
