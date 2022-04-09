@@ -50,7 +50,7 @@ function objectModelLoaded() {
 
 // detect a person and track them
 function detectPerson() {
-  // Make a prediction with a selected frame
+  // Make an object prediction with a selected frame
   objectDetector.detect(video, (err, results) => {
     ctx.beginPath();
     ctx.rect(0, 0, 640, 480);
@@ -59,6 +59,7 @@ function detectPerson() {
     ctx.lineWidth = "1";
     ctx.strokeStyle = "black";
     ctx.stroke();
+    // if any of the predictions are a person
     for (var i = 0; i < results.length; i++) {
       if (results[i].label == "person") {
         //context.drawImage(img,clipx,clipy,clipwidth,clipheight,x,y,width,height);
@@ -71,11 +72,11 @@ function detectPerson() {
         ctx.strokeStyle = "green";
         ctx.rect(results[i].x, results[i].y, results[i].width, results[i].height);
         ctx.stroke();
-        
+        drawKeypoints();
+        drawSkeleton();
         // call classify here
       }  
-      drawKeypoints();
-      drawSkeleton();
+      
     }
   });
 }
@@ -92,7 +93,7 @@ function gotPoses(results) {
 // model ready
 function modelReady() {
   console.log("pose model ready");
-  poseNet.multiPose(video);
+  poseNet.multiPose(canvas); // single pose check on each person
 }
 
 // A function to draw ellipses over the detected keypoints
