@@ -3,9 +3,15 @@ var video = document.getElementById("video");
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 
+var canvas0 = document.getElementById("canvas-one");
+var ctx0 = canvas0.getContext("2d");
+
+var canvas1 = document.getElementById("canvas-two");
+var ctx1 = canvas1.getContext("2d");
+
 // The detected positions will be inside an array
 let poses = [];
-let people = [];
+let person = [];
 
 video.addEventListener('loadeddata', (event) => {
   console.log('vid loaded');
@@ -35,7 +41,7 @@ function drawCameraIntoCanvas() {
   window.requestAnimationFrame(drawCameraIntoCanvas);
 }
 // Loop over the drawCameraIntoCanvas function
-//drawCameraIntoCanvas();
+//drawCameraIntoCanvas(); //uncomment for webcam
 
 // image classifier
 // Initialize the Image Classifier method with MobileNet
@@ -45,13 +51,14 @@ const objectDetector = ml5.objectDetector('cocossd', {}, objectModelLoaded);
 function objectModelLoaded() {
   console.log('cocossd Model Loaded');
   video.play();
-  drawCameraIntoCanvas();
+  drawCameraIntoCanvas(); // comment out for webcam
 }
 
 // detect a person and track them
 function detectPerson() {
   // Make an object prediction with a selected frame
   objectDetector.detect(video, (err, results) => {
+    // draw rect over canvas
     ctx.beginPath();
     ctx.rect(0, 0, 640, 480);
     ctx.fillStyle = "rgba(255,255,255,0.7)";
@@ -62,8 +69,30 @@ function detectPerson() {
     // if any of the predictions are a person
     for (var i = 0; i < results.length; i++) {
       if (results[i].label == "person") {
+        // create person  if doesn't exist
+        createPerson(i);
+        // draw bounding box
         //context.drawImage(img,clipx,clipy,clipwidth,clipheight,x,y,width,height);
-        ctx.drawImage(video, results[i].x, results[i].y, results[i].width, results[i].height, results[i].x, results[i].y, results[i].width, results[i].height);
+        //ctx.drawImage(video, results[i].x, results[i].y, results[i].width, results[i].height, results[i].x, results[i].y, results[i].width, results[i].height);
+        if (i == 0) {
+          ctx0.beginPath();
+          ctx0.rect(0, 0, 640, 480);
+          ctx0.fillStyle = "rgba(255,255,255,1)";
+          ctx0.fill();
+          ctx0.drawImage(video, results[i].x, results[i].y, results[i].width, results[i].height, results[i].x, results[i].y, results[i].width, results[i].height);
+          drawKeypoints(ctx0);
+          drawSkeleton(ctx0);
+        // call classify here
+        } 
+        else if(i==1) {
+          ctx1.beginPath();
+          ctx1.rect(0, 0, 640, 480);
+          ctx1.fillStyle = "rgba(255,255,255,1)";
+          ctx1.fill();
+          ctx1.drawImage(video, results[i].x, results[i].y, results[i].width, results[i].height, results[i].x, results[i].y, results[i].width, results[i].height);
+          drawKeypoints(ctx1);
+          drawSkeleton(ctx1);
+        }
         ctx.font = "20px Arial";
         ctx.fillStyle = "green";
         ctx.fillText("ID:" + i, results[i].x, results[i].y+20);
@@ -72,13 +101,20 @@ function detectPerson() {
         ctx.strokeStyle = "green";
         ctx.rect(results[i].x, results[i].y, results[i].width, results[i].height);
         ctx.stroke();
-        drawKeypoints();
-        drawSkeleton();
-        // call classify here
       }  
       
     }
   });
+}
+
+// if id doesn't already exists in person[] create a person
+function createPerson(i) {
+  const checkID = obj => obj.id === i;
+  let IDexists = person.some(checkID);
+  if (IDexists == false) {
+    person.push({id:i, poses:[]});
+  }
+  console.log(JSON.stringify(person));
 }
 
 // Create a new poseNet method with a single detection
@@ -93,7 +129,7 @@ function gotPoses(results) {
 // model ready
 function modelReady() {
   console.log("pose model ready");
-  poseNet.multiPose(canvas); // single pose check on each person
+  poseNet.multiPose(video); // single pose check on each person
 }
 
 // A function to draw ellipses over the detected keypoints
@@ -109,7 +145,6 @@ function drawKeypoints() {
         ctx.fillStyle = "#FF0000";
         ctx.arc(keypoint.position.x, keypoint.position.y, 5, 0, 2 * Math.PI);
         ctx.fill();
-        //ctx.stroke();
       }
     }
   }
